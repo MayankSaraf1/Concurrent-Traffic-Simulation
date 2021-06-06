@@ -4,6 +4,7 @@
 #include "Intersection.h"
 #include "Vehicle.h"
 
+
 Vehicle::Vehicle()
 {
     _currStreet = nullptr;
