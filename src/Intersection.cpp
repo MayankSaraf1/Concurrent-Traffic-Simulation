@@ -34,6 +34,7 @@ void WaitingVehicles::permitEntryToFirstInQueue()
     auto firstVehicle = _vehicles.begin();
 
     // fulfill promise and send signal back that permission to enter has been granted
+    // msaraf - as soon as this is set.. Intersection::addVehicleToQueue -->> ftrVehicleAllowedToEnter.wait(); will return! IMPORTANT !!
     firstPromise->set_value();
 
     // remove front elements from both queues
@@ -72,6 +73,7 @@ std::vector<std::shared_ptr<Street>> Intersection::queryStreets(std::shared_ptr<
 // adds a new vehicle to the queue and returns once the vehicle is allowed to enter
 void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
 {
+    // msaraf - locking as we are going to use "cout" which is a shared resource.. 
     std::unique_lock<std::mutex> lck(_mtx);
     std::cout << "Intersection #" << _id << "::addVehicleToQueue: thread id = " << std::this_thread::get_id() << std::endl;
     lck.unlock();
@@ -81,12 +83,21 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
     std::future<void> ftrVehicleAllowedToEnter = prmsVehicleAllowedToEnter.get_future();
     _waitingVehicles.pushBack(vehicle, std::move(prmsVehicleAllowedToEnter));
 
-    // wait until the vehicle is allowed to enter
+    // wait until the vehicle is allowed to enter the intersection
     ftrVehicleAllowedToEnter.wait();
     lck.lock();
+
+    // FP.6b : use the methods TrafficLight::getCurrentPhase and TrafficLight::waitForGreen to block the execution until the traffic light turns green.
+
+    while(_trafficLight.getCurrentPhase() != TrafficLightPhase::green) // FP.6b
+    {
+        _trafficLight.waitForGreen();
+    }
+
+
     std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " is granted entry." << std::endl;
     
-    // FP.6b : use the methods TrafficLight::getCurrentPhase and TrafficLight::waitForGreen to block the execution until the traffic light turns green.
+    
 
     lck.unlock();
 }
@@ -109,6 +120,7 @@ void Intersection::setIsBlocked(bool isBlocked)
 void Intersection::simulate() // using threads + promises/futures + exceptions
 {
     // FP.6a : In Intersection.h, add a private member _trafficLight of type TrafficLight. At this position, start the simulation of _trafficLight.
+    _trafficLight.simulate();
 
     // launch vehicle queue processing in a thread
     threads.emplace_back(std::thread(&Intersection::processVehicleQueue, this));
@@ -139,13 +151,10 @@ void Intersection::processVehicleQueue()
 
 bool Intersection::trafficLightIsGreen()
 {
-   // please include this part once you have solved the final project tasks
-   /*
+   // msaraf - shouldn't _currentPhase CS (and hence protected by mutex) as it gets toggled by a different thread running the TrafficLight?
    if (_trafficLight.getCurrentPhase() == TrafficLightPhase::green)
        return true;
    else
        return false;
-   */
-
-  return true; // makes traffic light permanently green
+  
 } 

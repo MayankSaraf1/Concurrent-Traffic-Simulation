@@ -4,7 +4,6 @@
 #include "Intersection.h"
 #include "Vehicle.h"
 
-
 Vehicle::Vehicle()
 {
     _currStreet = nullptr;
@@ -79,6 +78,13 @@ void Vehicle::drive()
             {
                 // request entry to the current intersection (using async)
                 auto ftrEntryGranted = std::async(&Intersection::addVehicleToQueue, _currDestination, get_shared_this());
+
+                // msaraf - We have provided the Vehicle pointer (therefore no need for move sementics) to the addVehicleToQueue function 
+                // Now a different thread will launch which will execute addVehicleToQueue function... 
+                // From the Vehicle POV, we don't care about the logic/implemenation of this addVehicleToQueue function but whenever the vehicle
+                // has been granted entry the future will return.. until then the vehicle will just keep wating..
+
+                // So now lets go look at the  addVehicleToQueue implementation.
 
                 // wait until entry has been granted
                 ftrEntryGranted.get();
