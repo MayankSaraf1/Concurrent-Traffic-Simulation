@@ -75,7 +75,7 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
 {
     // msaraf - locking as we are going to use "cout" which is a shared resource.. 
     std::unique_lock<std::mutex> lck(_mtx);
-    std::cout << "Intersection #" << _id << "::addVehicleToQueue: thread id = " << std::this_thread::get_id() << std::endl;
+    std::cout << "Intersection #" << _id << "::addVehicleToQueue: Vehicle #" << vehicle->getID() << std::endl;
     lck.unlock();
 
     // add new vehicle to the end of the waiting line
@@ -87,18 +87,28 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
     ftrVehicleAllowedToEnter.wait();
     lck.lock();
 
+    // msaraf - At this stage, the Intersection has permitted the Vehicle to enter the interseection meaning
+    // the Vehicle has reached the front of the Waiting queue and has been removed from the wait.
+    // The implemenation of adding to the Wating queue is inside Intersection::pushBack() function
+    // The implemenation of repeatedly checking the Waiting queue is inside Intersection::processVehicleQueue() function
+    // - For each intersection, there is a infinitte while loop to check if intersection is not blocked and there is atleast 1 Vehicle in the  Waiting queue, 
+    // if so then the intersection::permitEntryToFirstInQueue erase the 1st Vehicle and set_value on the future which resutrns above!
+
     // FP.6b : use the methods TrafficLight::getCurrentPhase and TrafficLight::waitForGreen to block the execution until the traffic light turns green.
 
+    // msaraf - Now th only thing that is remaining is that the associated Traffic light for this intersection should be green.
+    // We need to block further execution until the associated traffi light turns green.
+
+ 
     while(_trafficLight.getCurrentPhase() != TrafficLightPhase::green) // FP.6b
     {
+        //std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " is first in the queue. Waiting for traffic signal to turn green." << std::endl;
+
         _trafficLight.waitForGreen();
     }
 
-
-    std::cout << "Intersection #" << _id << ": Vehicle #" << vehicle->getID() << " is granted entry." << std::endl;
-    
-    
-
+    std::cout << "Intersection #" << _id << " Traffic Light is green." << " Vehicle #" << vehicle->getID() << " is granted entry." << std::endl;
     lck.unlock();
 }
 

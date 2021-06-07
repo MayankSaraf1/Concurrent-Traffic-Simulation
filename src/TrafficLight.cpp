@@ -16,7 +16,7 @@ T MessageQueue<T>::receive() //pop
     _condition.wait(uLock, [this] { return !_queue.empty(); }); // pass unique lock to condition variable
 
     // remove last element from queue
-    T msg = std::move(_queue.back());
+    T msg = std::move(_queue.back()); // msaraf- we are removing the last element coz we are interested the last state of the TrafficLight.. its truely i a LIFO (stack)
     _queue.pop_back();
 
     return msg;
@@ -57,7 +57,6 @@ void TrafficLight::waitForGreen()
         TrafficLightPhase currentPhase = _queueMgr.receive();
         if (currentPhase == TrafficLightPhase::green)
         {
-            //std::cout << "Phase: " << (int)currentPhase << " ID: " << std::this_thread::get_id() << "\n";
             return;
         }
     }
