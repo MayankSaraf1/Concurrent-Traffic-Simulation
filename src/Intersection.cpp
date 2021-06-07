@@ -85,7 +85,6 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
 
     // wait until the vehicle is allowed to enter the intersection
     ftrVehicleAllowedToEnter.wait();
-    lck.lock();
 
     // msaraf - At this stage, the Intersection has permitted the Vehicle to enter the interseection meaning
     // the Vehicle has reached the front of the Waiting queue and has been removed from the wait.
@@ -99,7 +98,6 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
     // msaraf - Now th only thing that is remaining is that the associated Traffic light for this intersection should be green.
     // We need to block further execution until the associated traffi light turns green.
 
- 
     while(_trafficLight.getCurrentPhase() != TrafficLightPhase::green) // FP.6b
     {
         //std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -108,6 +106,7 @@ void Intersection::addVehicleToQueue(std::shared_ptr<Vehicle> vehicle)
         _trafficLight.waitForGreen();
     }
 
+    lck.lock();
     std::cout << "Intersection #" << _id << " Traffic Light is green." << " Vehicle #" << vehicle->getID() << " is granted entry." << std::endl;
     lck.unlock();
 }
